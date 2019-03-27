@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import argparse
 import requests
@@ -6,7 +7,9 @@ import os
 import sys
 import subprocess
 import shutil
+import tempfile
 
+ASSETS_SUBDIR = "assets"
 SOURCE_SUBDIR = "crates"
 DOCSET_SUBDIR = "docsets"
 CRATES_API = "https://crates.io/api/v1/crates/"
@@ -35,12 +38,12 @@ def get_repo_url(crate_name):
     json = resp.json()
     return json["crate"]["repository"]
 
-    
+
 def clone_repo(repo_path):
     subprocess.check_call("git clone {}".format(repo_path), shell=True)
     print("cloned {}".format(repo_path))
 
-    
+
 def update_docs(crate_dir, crate_name):
     os.chdir(crate_dir)
     try:
@@ -63,22 +66,30 @@ def update_docs(crate_dir, crate_name):
 
 def main():
     parser = argparse.ArgumentParser(description='create or update a dash docset')
+    parser.add_argument('--target',type=str,help='moves all dashsets into that directory')
     parser.add_argument(
         'crate_names',
         type=str,
         nargs='+',
         help='a list of crate names to generate or update docs for')
-    
+
     args = parser.parse_args()
-    base_dir = os.getcwd()
+    if args.target is not None:
+        target_dir = args.target
+        base_dir = tempfile.gettempdir()
+    else:
+        target_dir = None
+        base_dir = os.path.dirname(os.path.realpath(__file__))
     out_dir = os.path.join(base_dir, DOCSET_SUBDIR)
     source_dir = os.path.join(base_dir, SOURCE_SUBDIR)
-    
+    assets_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), ASSETS_SUBDIR)
+
+
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     if not os.path.exists(source_dir):
         os.makedirs(source_dir)
-    
+
     for crate in args.crate_names:
         os.chdir(source_dir)
         print("generating docs for", crate)
@@ -89,10 +100,18 @@ def main():
             if os.path.exists(dest_path):
                 shutil.rmtree(dest_path)
             shutil.move(docset_path, dest_path)
+            shutil.copy(os.path.join(assets_dir,'icon.png'), os.path.join(dest_path,'icon.png'))
             print("updated", dest_path)
+            if target_dir is not None:
+                target_path = os.path.join(target_dir, os.path.split(docset_path)[-1])
+                if os.path.exists(target_path):
+                    shutil.rmtree(target_path)
+                shutil.move(dest_path, target_path)
+                print("installed {a} to {b}".format(a=dest_path, b=target_path))
+
         except Exception as e:
-            print(e)
+            import traceback
+            print(traceback.format_exc())
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
