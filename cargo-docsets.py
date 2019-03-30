@@ -94,6 +94,7 @@ def main():
         os.chdir(source_dir)
         print("generating docs for", crate)
         try:
+            crate = crate.replace('-','_')
             docset_path = gen_docset(crate)
             dest_path = os.path.join(out_dir, os.path.split(docset_path)[-1])
             assert dest_path.endswith(".docset")
