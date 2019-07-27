@@ -21,5 +21,10 @@ This repo contains a fork of a simple script for quickly generating Dash compati
 `./cargo-docsets.py serde crossbeam rand log regex`
 
 This will clone the repos for these crates (assuming the name passed is used on [crates.io](https://crates.io),
-generate the docsets, and copy them into the `docsets` subdir if the target parameter is not set. These `.docset` files can be added to Dash in
-dash's preferences.
+generate the docsets, and copy them into the `docsets` subdir if the target parameter is not set. 
+
+Creating a docset from a older version of a crate is also possible by adding @ and the version number to the name.
+
+`./cargo-docsets.py structopt@0.1.5`
+
+These `.docset` files can be added to Dash in dash's preferences, or added to Zeal by copy the finished package to the local docset folder.
